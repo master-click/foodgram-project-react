@@ -2,16 +2,18 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
 from users.models import Subscription, User
 
 from .filters import IngredientFilter, RecipeFilter
+from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly
 from .serializers import (CartSerializer, CreateRecipeSerializer,
                           FavoriteSerializer, IngredientSerializer,
@@ -22,12 +24,12 @@ from .serializers import (CartSerializer, CreateRecipeSerializer,
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """ Отображение рецептов. """
-
     permission_classes = [AllowAny, ]
     queryset = Recipe.objects.all().order_by('-pub_date')
     serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = RecipeFilter
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -40,6 +42,7 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, ]
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    pagination_class = CustomPagination
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -47,7 +50,6 @@ class TagViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminOrReadOnly, ]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -55,14 +57,12 @@ class IngredientViewSet(viewsets.ModelViewSet):
     permission_classes = [AdminOrReadOnly, ]
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    pagination_class = None
     filter_backends = [IngredientFilter, ]
     search_fields = ['^name', ]
 
 
 class FavoriteView(APIView):
     """ Добавление/удаление рецепта из избранного. """
-
     permission_classes = [IsAuthenticated, ]
 
     def post(self, request, id):
@@ -70,31 +70,21 @@ class FavoriteView(APIView):
             'user': request.user.id,
             'recipe': id
         }
-        if not Favorite.objects.filter(
-           user=request.user, recipe__id=id).exists():
-            serializer = FavoriteSerializer(
-                data=data, context={'request': request}
-            )
-            if serializer.is_valid():
-                serializer.save()
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED)
-        return Response('HTTP_400_BAD_REQUEST',
-                        status=status.HTTP_400_BAD_REQUEST)
+        serializer = FavoriteSerializer(
+            data=data, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
-        if Favorite.objects.filter(
-           user=request.user, recipe=recipe).exists():
-            Favorite.objects.filter(user=request.user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response('HTTP_400_BAD_REQUEST',
-                        status=status.HTTP_400_BAD_REQUEST)
+        Favorite.objects.filter(user=request.user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class SubscribeView(APIView):
     """ Операция подписки/отписки. """
-
     permission_classes = [IsAuthenticated, ]
 
     def post(self, request, id):
@@ -106,27 +96,23 @@ class SubscribeView(APIView):
             data=data,
             context={'request': request}
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         author = get_object_or_404(User, id=id)
-        if Subscription.objects.filter(
-           follower=request.user, author=author).exists():
-            subscription = get_object_or_404(
+        subscription = get_object_or_404(
                 Subscription, follower=request.user, author=author
             )
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        subscription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShowSubscriptionsView(ListAPIView):
     """ Отображение подписок. """
-
     permission_classes = [IsAuthenticated, ]
+    pagination_class = CustomPagination
 
     def get(self, request):
         follower = request.user
@@ -140,7 +126,6 @@ class ShowSubscriptionsView(ListAPIView):
 
 class CartView(APIView):
     """ Добавить/удалить рецепт в список покупок. """
-
     permission_classes = [IsAuthenticated, ]
 
     def post(self, request, id):
@@ -148,30 +133,15 @@ class CartView(APIView):
             'user': request.user.id,
             'recipe': id
         }
-        recipe = get_object_or_404(Recipe, id=id)
-        if not Cart.objects.filter(user=request.user, recipe=recipe).exists():
-            serializer = CartSerializer(data=data,
-                                        context={'request': request})
-            if serializer.is_valid():
-                serializer.save()
-                return Response(data=serializer.data,
-                                status=status.HTTP_201_CREATED)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        serializer = CartSerializer(
-            data=data,
-            context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        serializer = CartSerializer(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def delete(self, request, id):
         recipe = get_object_or_404(Recipe, id=id)
-        if Cart.objects.filter(user=request.user, recipe=recipe).exists():
-            Cart.objects.filter(user=request.user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        Cart.objects.filter(user=request.user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])

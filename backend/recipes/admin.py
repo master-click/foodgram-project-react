@@ -1,6 +1,9 @@
 from django.contrib import admin
+from rest_framework.authtoken.admin import TokenAdmin
 
 from .models import Cart, Favorite, Ingredient, Recipe, RecipeIngredient, Tag
+
+TokenAdmin.raw_id_fields = ['user']
 
 
 class IngredientInLine(admin.TabularInline):

@@ -1,8 +1,11 @@
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SECRET_KEY = os.getenv('SECRET_KEY', default='8n)dx(_+$seu&=aplc)e25c!3n0n%ntm8p0ern%jc(u=1*jg2z')
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = True
 
@@ -96,7 +99,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
-MEDIA_URL = '/media/'
+MEDIA_URL = 'http://localhost/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
@@ -111,9 +114,6 @@ REST_FRAMEWORK = {
     ],
 
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 6,
 }
 
 DJOSER = {

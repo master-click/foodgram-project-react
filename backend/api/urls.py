@@ -11,7 +11,6 @@ router.register('users', UserViewSet)
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
 
-
 urlpatterns = [
     path(
         'recipes/download_shopping_cart/',
