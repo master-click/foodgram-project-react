@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 
 from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
 from users.models import Subscription, User
-
 from .filters import IngredientFilter, RecipeFilter
+from .mixins import CustomMixin
 from .pagination import CustomPagination
 from .permissions import AdminOrReadOnly
 from .serializers import (CartSerializer, CreateRecipeSerializer,
@@ -61,28 +61,6 @@ class IngredientViewSet(viewsets.ModelViewSet):
     search_fields = ['^name', ]
 
 
-class FavoriteView(APIView):
-    """ Добавление/удаление рецепта из избранного. """
-    permission_classes = [IsAuthenticated, ]
-
-    def post(self, request, id):
-        data = {
-            'user': request.user.id,
-            'recipe': id
-        }
-        serializer = FavoriteSerializer(
-            data=data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def delete(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        Favorite.objects.filter(user=request.user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 class SubscribeView(APIView):
     """ Операция подписки/отписки. """
     permission_classes = [IsAuthenticated, ]
@@ -124,24 +102,18 @@ class ShowSubscriptionsView(ListAPIView):
         return self.get_paginated_response(serializer.data)
 
 
-class CartView(APIView):
-    """ Добавить/удалить рецепт в список покупок. """
+class FavoriteView(CustomMixin, APIView):
+    """ Добавить/удалить рецепт из избранного. """
     permission_classes = [IsAuthenticated, ]
+    serializer_class = FavoriteSerializer
+    model_class = Favorite
 
-    def post(self, request, id):
-        data = {
-            'user': request.user.id,
-            'recipe': id
-        }
-        serializer = CartSerializer(data=data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, id):
-        recipe = get_object_or_404(Recipe, id=id)
-        Cart.objects.filter(user=request.user, recipe=recipe).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+class CartView(CustomMixin, APIView):
+    """ Добавить/удалить рецепт из списка покупок. """
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = CartSerializer
+    model_class = Cart
 
 
 @api_view(['GET'])
@@ -153,10 +125,10 @@ def download_shopping_cart(request):
         'ingredient__name',
         'ingredient__measurement_unit'
     ).annotate(total=Sum('amount')).order_by('ingredient__name')
-    for i in ingredients:
+    for ingredient in ingredients:
         ingredient_list += (
-            f"\n{i['ingredient__name']} - "
-            f"{i['total']} {i['ingredient__measurement_unit']}"
+          f"\n{ingredient['ingredient__name']} - "
+          f"{ingredient['total']} {ingredient['ingredient__measurement_unit']}"
         )
     file = 'shopping_list.txt'
     response = HttpResponse(ingredient_list, content_type='text/plain')

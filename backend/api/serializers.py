@@ -1,4 +1,5 @@
 from django.db.models import F
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -261,10 +262,9 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        ingredients = self.initial_data.get('ingredients')
-        list = []
-        for i in ingredients:
-            amount = i['amount']
+        ingredients = data.get('recipe')
+        for ingredient in ingredients:
+            amount = ingredient['amount']
             if type(amount) != int:
                 raise serializers.ValidationError({
                    'amount': 'Значение должно быть целым числом.'
@@ -273,19 +273,23 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                    'amount': 'Убедитесь, что это значение больше либо равно 1.'
                 })
-            if i['id'] in list:
+            if ingredient['id'] in list():
                 raise serializers.ValidationError({
                    'ingredient': 'Ингредиенты должны быть уникальными!'
                 })
-            list.append(i['id'])
+            list().append(ingredient['id'])
         return data
 
     def create_ingredients(self, ingredients, recipe):
-        for i in ingredients:
-            ingredient = Ingredient.objects.get(id=i['id'])
-            RecipeIngredient.objects.create(
-                ingredient=ingredient, recipe=recipe, amount=i['amount']
+        objs = [
+            RecipeIngredient(
+                ingredient=get_object_or_404(Ingredient, id=ingredient['id']),
+                recipe=recipe,
+                amount=ingredient['amount'],
             )
+            for ingredient in ingredients
+        ]
+        RecipeIngredient.objects.bulk_create(objs)
 
     def create(self, validated_data):
         validated_data['author'] = self.context['request'].user
@@ -297,20 +301,13 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
         return new_recipe
 
     def update(self, recipe, validated_data):
-        tags = validated_data.get('tags')
-        ingredients = validated_data.get('recipe')
-        recipe.image = validated_data.get('image', recipe.image)
-        recipe.name = validated_data.get('name', recipe.name)
-        recipe.text = validated_data.get('text', recipe.text)
-        recipe.cooking_time = validated_data.get(
-            'cooking_time', recipe.cooking_time)
-        if tags:
-            recipe.tags.clear()
-            recipe.tags.set(tags)
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('recipe')
+        super().update(recipe, validated_data)
+        recipe.tags.set(tags)
         if ingredients:
             recipe.ingredients.clear()
             self.create_ingredients(ingredients, recipe)
-        recipe.save()
         return recipe
 
     def to_representation(self, instance):

@@ -74,6 +74,12 @@ class RecipeIngredient(models.Model):
 
     class Meta:
         ordering = ['recipe']
+        constraints = (
+            models.UniqueConstraint(
+                fields=['recipe', 'ingredient'],
+                name='recipe_ingredient_unique'
+            ),
+        )
 
     def __str__(self):
         return f'{self.ingredient}, {self.amount}'
