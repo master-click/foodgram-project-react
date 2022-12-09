@@ -37,19 +37,23 @@ sudo apt install docker-compose
 sudo docker-compose up -d --build
 ```
 
-4. Выполняем миграции и добавляем статику:
+4. Выполняем миграции, создаем суперпользователя и добавляем статику:
 
 ```
-sudo docker-compose exec foodgram-backend python manage.py makemigrations
-sudo docker-compose exec foodgram-backend python manage.py migrate
-sudo docker-compose exec foodgram-backend python manage.py collectstatic
+sudo docker exec -it <CONTAINER ID> bash # Заходим внутрь контейнера
+python manage.py makemigrations
+python manage.py migrate
+python manage.py collectstatic
+python manage.py createsuperuser
+exit # Выходим из контейнера
 ```
 
-5. Загружаем данные из дампа базы данных:
+## Данные для проверки проекта
 
 ```
-sudo docker-compose exec foodgram-backend loaddata > dump.json
+email: master-click@yandex.ru
+password: admin
 ```
 
-### Разработчик ###
+### Разработчик
 Батова Ольга, @olgabato
