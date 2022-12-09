@@ -37,7 +37,7 @@ sudo apt install docker-compose
 sudo docker-compose up -d --build
 ```
 
-4. Выполняем миграции, создаем суперпользователя и добавляем статику:
+4. Выполняем миграции, создаем суперпользователя, добавляем статику и загружаем базу ингредиентов:
 
 ```
 sudo docker exec -it <CONTAINER ID> bash # Заходим внутрь контейнера
@@ -45,6 +45,7 @@ python manage.py makemigrations
 python manage.py migrate
 python manage.py collectstatic
 python manage.py createsuperuser
+python manage.py loaddata ingredients.json
 exit # Выходим из контейнера
 ```
 
