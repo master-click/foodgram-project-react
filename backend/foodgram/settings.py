@@ -7,9 +7,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['web', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['web', '127.0.0.1', 'localhost', '51.250.104.163']
 
 INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
@@ -99,7 +99,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
-MEDIA_URL = 'http://localhost/media/'
+MEDIA_URL = 'http://51.250.104.163/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
