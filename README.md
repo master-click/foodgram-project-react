@@ -1,5 +1,13 @@
 # «Продуктовый помощник» Foodgram
 
+## Данные для проверки проекта
+
+```
+http://51.250.104.163
+email: master-click@yandex.ru
+password: admin
+```
+
 ## Что умеет Foodgram
 
 Все пользователи могут посмотреть рецепты, зарегистрироваться на сайте, чтобы:
@@ -47,13 +55,6 @@ python manage.py collectstatic
 python manage.py createsuperuser
 python manage.py loaddata ingredients.json
 exit # Выходим из контейнера
-```
-
-## Данные для проверки проекта
-
-```
-email: master-click@yandex.ru
-password: admin
 ```
 
 ### Разработчик
