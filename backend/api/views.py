@@ -36,6 +36,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return CreateRecipeSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """ Отображение пользователей. Регистрация нового пользователя. """
