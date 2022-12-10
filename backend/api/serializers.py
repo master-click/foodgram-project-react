@@ -263,6 +263,7 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = data.get('recipe')
+        all_ingredients = list()
         for ingredient in ingredients:
             amount = ingredient['amount']
             if type(amount) != int:
@@ -273,11 +274,11 @@ class CreateRecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                    'amount': 'Убедитесь, что это значение больше либо равно 1.'
                 })
-            if ingredient['id'] in list():
+            if ingredient['id'] in all_ingredients:
                 raise serializers.ValidationError({
                    'ingredient': 'Ингредиенты должны быть уникальными!'
                 })
-            list().append(ingredient['id'])
+            all_ingredients.append(ingredient['id'])
         return data
 
     def create_ingredients(self, ingredients, recipe):

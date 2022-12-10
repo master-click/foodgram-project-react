@@ -114,6 +114,7 @@ class CartView(CustomMixin, APIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = CartSerializer
     model_class = Cart
+    pagination_class = None
 
 
 @api_view(['GET'])
