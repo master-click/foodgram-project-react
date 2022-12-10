@@ -27,9 +27,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny, ]
     queryset = Recipe.objects.all().order_by('-pub_date')
     serializer_class = RecipeSerializer
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = RecipeFilter
-    pagination_class = CustomPagination
+
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
@@ -114,7 +115,6 @@ class CartView(CustomMixin, APIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = CartSerializer
     model_class = Cart
-    pagination_class = None
 
 
 @api_view(['GET'])
